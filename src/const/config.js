@@ -12,4 +12,7 @@ export const config = {
     path.join(process.cwd(), "./src/data/pl99base.pdf"),
     path.join(process.cwd(), "./src/data/pl99docum.pdf"),
   ],
+  textContext: [
+    path.join(process.cwd(), "./src/data/plit99-site-context.txt"),
+  ],
 };

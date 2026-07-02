@@ -13,9 +13,7 @@ export async function FAQLoad() {
 
       const text = pdfDoc.extractAllText();
 
-      const field = pdfDoc.getFormFields();
-
-      combinedText += `\n--- СЕКЦИЯ ИЗ ФАЙЛА ${filePath} ---\n` + text;
+      combinedText += `\n--- СТАРЫЕ МАТЕРИАЛЫ PDF: ${filePath} ---\n` + text;
       console.log(`Sucess: ${filePath}`);
     } catch (error) {
       console.error(`Error reading file ${filePath}:`, error);
@@ -23,5 +21,21 @@ export async function FAQLoad() {
     }
   }
 
+  for (const filePath of config.textContext || []) {
+    if (!fs.existsSync(filePath)) {
+      console.warn(`Warning: optional text context not found ${filePath}`);
+      continue;
+    }
+
+    try {
+      const text = fs.readFileSync(filePath, "utf8");
+      combinedText += `\n--- НОВЫЕ ДАННЫЕ С САЙТА: ${filePath} ---\n` + text;
+      console.log(`Sucess: ${filePath}`);
+    } catch (error) {
+      console.error(`Error reading text context ${filePath}:`, error);
+      throw error;
+    }
+  }
+  
   return combinedText;
 }
