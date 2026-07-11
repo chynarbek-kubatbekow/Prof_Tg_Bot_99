@@ -49,7 +49,8 @@ GOOGLE_SHEET_NAME=Sheet1
 Несколько ID можно указывать через запятую, пробел или перенос строки.
 
 `DATABASE_URL` - PostgreSQL/Neon строка подключения. Если переменная задана,
-админка хранит заявки, FAQ, направления, контакты, настройки и логи в PostgreSQL.
+админка хранит заявки, FAQ, направления, контакты, настройки, логи и session-состояние
+диалогов в PostgreSQL.
 
 Локальный fallback без PostgreSQL:
 
@@ -87,6 +88,8 @@ src/data/bot-admin.sqlite
 ```
 
 Таблицы создаются автоматически при первом запуске бота.
+Текущие шаги пользователя и администратора тоже сохраняются в БД, поэтому заявки
+и редактирование в `/admin` не зависят от памяти процесса.
 
 Файлы из `src/data` остаются в репозитории и попадают на Render вместе с кодом.
 При старте бот извлекает из них текстовый контекст и сохраняет его в таблицу
@@ -126,6 +129,9 @@ src/data/plit99-site-context.txt
 npm start
 ```
 
+Локально без `WEBHOOK_URL` и `RENDER_EXTERNAL_URL` бот запускается через polling.
+На Render Web Service бот автоматически использует webhook через `RENDER_EXTERNAL_URL`.
+
 Запуск напрямую:
 
 ```powershell
@@ -164,7 +170,9 @@ node -e "import('./src/lib/faq-load.js').then(async m=>{const t=await m.FAQLoad(
 
 ## 9. Render
 
-Проект подготовлен как Render Background Worker через `render.yaml`.
+Проект подготовлен как Render Web Service через `render.yaml`.
+Render автоматически дает переменные `PORT` и `RENDER_EXTERNAL_URL`, поэтому
+отдельный `WEBHOOK_URL` на Render обычно не нужен.
 
 Build command:
 
@@ -191,6 +199,26 @@ ADMIN_IDS=123456789,987654321
 Google Sheets env vars опциональны. Если они не заданы, заявки всё равно сохраняются
 в PostgreSQL.
 
+Опциональные env vars:
+
+```env
+WEBHOOK_URL=https://your-domain.example.com
+WEBHOOK_PATH=/telegram/webhook
+WEBHOOK_SECRET=long_random_secret
+```
+
+`WEBHOOK_URL` нужен только если сервис запускается не на Render или если нужно
+принудительно указать публичный адрес. `WEBHOOK_SECRET` повышает защиту webhook,
+но для базового запуска не обязателен.
+
+После деплоя проверь в Render:
+
+```text
+/health
+```
+
+Ответ должен быть JSON со статусом `ok` и режимом `webhook`.
+
 ## Частые Ошибки
 
 `Missing required environment variable BOT_TOKEN` - не заполнен `BOT_TOKEN`.
@@ -200,3 +228,9 @@ Google Sheets env vars опциональны. Если они не заданы
 `ENOENT ... pl99base.pdf` - нет файла `src/data/pl99base.pdf`.
 
 `ENOENT ... pl99docum.pdf` - нет файла `src/data/pl99docum.pdf`.
+
+`No open ports detected` на Render - сервис создан не как Web Service из нового
+`render.yaml` или приложение не получило переменную `PORT`.
+
+`409 Conflict: terminated by other getUpdates request` - где-то еще запущена
+копия этого же бота в polling-режиме. Оставь один запущенный экземпляр.

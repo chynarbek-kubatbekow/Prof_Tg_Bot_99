@@ -38,6 +38,14 @@ await storage.upsertKnowledgeSource({
 });
 assert.match(await storage.getStoredKnowledgeContext(), new RegExp(`${marker}_content`));
 
+await storage.writeSession(`${marker}_session`, { waitingForAI: true, marker });
+assert.deepEqual(await storage.readSession(`${marker}_session`), {
+  waitingForAI: true,
+  marker,
+});
+await storage.deleteSession(`${marker}_session`);
+assert.equal(await storage.readSession(`${marker}_session`), undefined);
+
 const faq = await storage.createFaq(`${marker}_question`, `${marker}_answer`, {
   id: 111,
   first_name: "Smoke",

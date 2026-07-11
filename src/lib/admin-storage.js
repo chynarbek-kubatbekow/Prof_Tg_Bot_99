@@ -160,6 +160,14 @@ function mapKnowledgeSource(row) {
   };
 }
 
+function parseJsonValue(value) {
+  if (value === undefined || value === null) {
+    return undefined;
+  }
+
+  return typeof value === "string" ? JSON.parse(value) : value;
+}
+
 function sortByKnownKeys(rows, knownFields) {
   const order = new Map(knownFields.map((field, index) => [field.key, index]));
   return [...rows].sort((a, b) => (order.get(a.key) ?? 999) - (order.get(b.key) ?? 999));
@@ -271,6 +279,23 @@ function createPostgresStorage(databaseUrl) {
     databaseUrl,
     ready: init(),
     close: () => pool.end(),
+    async readSession(key) {
+      const row = await get("SELECT value FROM bot_sessions WHERE key = $1", [key]);
+      return parseJsonValue(row?.value);
+    },
+    async writeSession(key, value) {
+      await run(
+        `INSERT INTO bot_sessions (key, value, updated_at)
+         VALUES ($1, $2::jsonb, $3)
+         ON CONFLICT (key)
+         DO UPDATE SET value = EXCLUDED.value,
+                       updated_at = EXCLUDED.updated_at`,
+        [key, JSON.stringify(value), now()],
+      );
+    },
+    async deleteSession(key) {
+      await run("DELETE FROM bot_sessions WHERE key = $1", [key]);
+    },
     async logChange(admin, action, entity, entityId = "", details = "") {
       await run(
         `INSERT INTO change_logs (admin_id, admin_name, action, entity, entity_id, details, created_at)
@@ -633,6 +658,12 @@ function createPostgresStorage(databaseUrl) {
         content TEXT NOT NULL,
         updated_at TEXT NOT NULL
       );
+
+      CREATE TABLE IF NOT EXISTS bot_sessions (
+        key TEXT PRIMARY KEY,
+        value JSONB NOT NULL,
+        updated_at TEXT NOT NULL
+      );
     `);
 
     for (const section of INFO_SECTIONS) {
@@ -672,6 +703,22 @@ function createSqliteStorage(dbPath = config.databasePath) {
     dbPath,
     ready: Promise.resolve().then(init),
     close: async () => db.close(),
+    async readSession(key) {
+      const row = db.prepare("SELECT value FROM bot_sessions WHERE key = ?").get(key);
+      return parseJsonValue(row?.value);
+    },
+    async writeSession(key, value) {
+      db.prepare(
+        `INSERT INTO bot_sessions (key, value, updated_at)
+         VALUES (?, ?, ?)
+         ON CONFLICT(key)
+         DO UPDATE SET value = excluded.value,
+                       updated_at = excluded.updated_at`,
+      ).run(key, JSON.stringify(value), now());
+    },
+    async deleteSession(key) {
+      db.prepare("DELETE FROM bot_sessions WHERE key = ?").run(key);
+    },
     async logChange(admin, action, entity, entityId = "", details = "") {
       db.prepare(
         `INSERT INTO change_logs (admin_id, admin_name, action, entity, entity_id, details, created_at)
@@ -1021,6 +1068,12 @@ function createSqliteStorage(dbPath = config.databasePath) {
         title TEXT NOT NULL,
         source_type TEXT NOT NULL,
         content TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS bot_sessions (
+        key TEXT PRIMARY KEY,
+        value TEXT NOT NULL,
         updated_at TEXT NOT NULL
       );
     `);

@@ -106,6 +106,13 @@ await storage.upsertKnowledgeSource({
   content: "Базовый контекст из файлов для теста.",
 });
 assert.match(await storage.getStoredKnowledgeContext(), /Базовый контекст из файлов/);
+await storage.writeSession("test-session", { waitingForName: true, userName: "Тест" });
+assert.deepEqual(await storage.readSession("test-session"), {
+  waitingForName: true,
+  userName: "Тест",
+});
+await storage.deleteSession("test-session");
+assert.equal(await storage.readSession("test-session"), undefined);
 const { session, events, createContext } = createMockContextFactory(storage);
 
 await adminPanelCommandHandler(createContext({ fromId: 222 }));
