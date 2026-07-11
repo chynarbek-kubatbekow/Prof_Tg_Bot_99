@@ -12,6 +12,11 @@ function sendJson(res, statusCode, data) {
   res.end(JSON.stringify(data));
 }
 
+function sendHead(res, statusCode) {
+  res.writeHead(statusCode);
+  res.end();
+}
+
 function buildWebhookEndpoint() {
   return new URL(config.webhookPath, `${config.webhookUrl}/`).toString();
 }
@@ -34,6 +39,11 @@ function createHealthServer({ bot, mode, webhookHandler }) {
 
   async function handleRequest(req, res) {
     const url = new URL(req.url || "/", `http://${req.headers.host || "localhost"}`);
+
+    if (req.method === "HEAD" && (url.pathname === "/" || url.pathname === "/health")) {
+      sendHead(res, 200);
+      return;
+    }
 
     if (req.method === "GET" && (url.pathname === "/" || url.pathname === "/health")) {
       sendJson(res, 200, {
