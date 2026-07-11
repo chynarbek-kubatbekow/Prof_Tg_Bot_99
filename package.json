@@ -3,10 +3,15 @@
   "version": "1.0.0",
   "type": "module",
   "main": "index.js",
+  "engines": {
+    "node": ">=24"
+  },
   "scripts": {
     "start": "node src/index.js",
     "dev": "nodemon src/index.js",
-    "build:site-context": "node scripts/build-site-context.js"
+    "build:site-context": "node scripts/build-site-context.js",
+    "test:admin": "node scripts/admin-smoke-test.js",
+    "test:postgres": "node scripts/postgres-smoke-test.js"
   },
   "keywords": [],
   "author": "",
@@ -18,7 +23,8 @@
     "grammy": "^1.44.0",
     "openai": "^6.43.0",
     "pdf-oxide-wasm": "^0.3.65",
-    "pdf-parse": "^2.4.5"
+    "pdf-parse": "^2.4.5",
+    "pg": "^8.22.0"
   },
   "devDependencies": {
     "nodemon": "^3.1.14"

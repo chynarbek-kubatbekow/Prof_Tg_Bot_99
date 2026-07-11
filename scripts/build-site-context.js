@@ -1,4 +1,4 @@
-import fs from "fs";
+﻿import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -89,10 +89,16 @@ function readPage(fileName, title) {
 
 const generatedAt = new Date().toISOString();
 const sections = pages.map(([fileName, title]) => readPage(fileName, title));
+const manualCorrections = [
+  "## Актуальное уточнение для ответов бота",
+  "Проверено 2026-07-08 по официальной странице поступления pl99.kg/admission/. Жесткое контекстное правило: в ПЛИТ №99 может поступить только абитуриент с паспортом Кыргызской Республики. Если спрашивают о поступлении с российским паспортом, паспортом РФ, казахстанским паспортом или любым другим иностранным паспортом, не подтверждай такую возможность. Без паспорта Кыргызской Республики возможность поступления не подтверждается; детали можно уточнить у приёмной комиссии.",
+].join("\n");
 const content = [
   "# Контекст с сайта ПЛИТ №99",
   `Источник: ${siteRoot}`,
   `Сгенерировано: ${generatedAt}`,
+  "",
+  manualCorrections,
   "",
   ...sections,
   "",

@@ -1,4 +1,4 @@
-# Litsey Main Bot
+﻿# Litsey Main Bot
 
 Короткая инструкция по установке и запуску Telegram-бота.
 
@@ -31,6 +31,8 @@ npm ci
 ```env
 BOT_TOKEN=telegram_bot_token
 DEEPSEEK_KEY=deepseek_api_key
+ADMIN_IDS=123456789,987654321
+DATABASE_URL=postgresql_connection_string
 ```
 
 Для Google Sheets:
@@ -42,6 +44,20 @@ GOOGLE_SHEET_NAME=Sheet1
 ```
 
 Файл `google-credentials.json` должен лежать в корне проекта.
+
+`ADMIN_IDS` - Telegram ID сотрудников, которым разрешён доступ к панели `/admin`.
+Несколько ID можно указывать через запятую, пробел или перенос строки.
+
+`DATABASE_URL` - PostgreSQL/Neon строка подключения. Если переменная задана,
+админка хранит заявки, FAQ, направления, контакты, настройки и логи в PostgreSQL.
+
+Локальный fallback без PostgreSQL:
+
+```env
+DATABASE_PATH=./src/data/bot-admin.sqlite
+```
+
+Если `DATABASE_URL` не задан, используется SQLite-файл `src/data/bot-admin.sqlite`.
 
 ## 4. Проверить Данные Бота
 
@@ -57,6 +73,34 @@ src/data/pl99docum.pdf
 ```text
 src/data/plit99-site-context.txt
 ```
+
+Данные админки в production хранятся в PostgreSQL/Neon через:
+
+```env
+DATABASE_URL=postgresql_connection_string
+```
+
+Локальный SQLite fallback:
+
+```text
+src/data/bot-admin.sqlite
+```
+
+Таблицы создаются автоматически при первом запуске бота.
+
+Файлы из `src/data` остаются в репозитории и попадают на Render вместе с кодом.
+При старте бот извлекает из них текстовый контекст и сохраняет его в таблицу
+`knowledge_sources` в PostgreSQL. DeepSeek получает контекст в таком порядке:
+
+1. свежие данные из админки;
+2. база знаний из `src/data`, сохраненная в PostgreSQL;
+3. fallback на локально загруженный контекст из файлов.
+
+Админка не редактирует PDF напрямую. Она сохраняет отдельный актуальный слой данных
+в PostgreSQL, и этот слой имеет приоритет над PDF/старым контекстом.
+
+Для Render не используй SQLite без persistent disk: локальные файлы могут потеряться
+после перезапуска или redeploy. Используй `DATABASE_URL` от Neon/Render Postgres.
 
 PDF и данные сайта используются вместе: старые материалы и новые данные дополняют друг друга.
 
@@ -94,11 +138,58 @@ node src/index.js
 npm run dev
 ```
 
-## 7. Быстрая Проверка Контекста
+## 7. Админка
+
+Админ открывает панель командой:
+
+```text
+/admin
+```
+
+В панели можно смотреть заявки, менять их статусы, редактировать информацию бота,
+FAQ, контакты, направления обучения и основные тексты/кнопки.
+
+Изменения сразу используются в пользовательской части бота.
+Если задан `DATABASE_URL`, они сохраняются в PostgreSQL; иначе используется SQLite fallback.
+
+## 8. Проверки
 
 ```powershell
+npm run test:admin
+npm run test:postgres
 node -e "import('./src/lib/faq-load.js').then(async m=>{const t=await m.FAQLoad(); console.log('Context chars:', t.length); console.log('Has site data:', t.includes('Контекст с сайта ПЛИТ №99'));})"
 ```
+
+`npm run test:postgres` требует заполненный `DATABASE_URL`.
+
+## 9. Render
+
+Проект подготовлен как Render Background Worker через `render.yaml`.
+
+Build command:
+
+```text
+npm ci
+```
+
+Start command:
+
+```text
+npm start
+```
+
+Обязательные Render env vars:
+
+```env
+NODE_VERSION=24.15.0
+BOT_TOKEN=telegram_bot_token
+DEEPSEEK_KEY=deepseek_api_key
+DATABASE_URL=postgresql_connection_string
+ADMIN_IDS=123456789,987654321
+```
+
+Google Sheets env vars опциональны. Если они не заданы, заявки всё равно сохраняются
+в PostgreSQL.
 
 ## Частые Ошибки
 

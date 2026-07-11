@@ -1,12 +1,7 @@
-import { keyboard } from "../keyboard.js";
+﻿export async function startHandler(ctx) {
+  const welcomeMessage =
+    (await ctx.storage?.getSettingValue("welcome_message")) ||
+    "Добро пожаловать\n\nЯ - оператор-помощник лицея\n/start - начать работу";
 
-export async function startHandler(ctx) {
-  await ctx.reply(
-    `Добро пожаловать
-        
-        Я - оператор-помощник лицея
-        /start - начать работу
-        `,
-    { reply_markup: keyboard },
-  );
+  await ctx.reply(welcomeMessage, { reply_markup: await ctx.getMainKeyboard() });
 }

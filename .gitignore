@@ -3,4 +3,8 @@
 /src/data/*
 !/src/data/
 !/src/data/plit99-site-context.txt
+!/src/data/admission-passport-rule.pdf
+!/src/data/admission-passport-rule.txt
+!/src/data/pl99base.pdf
+!/src/data/pl99docum.pdf
 /google-credentials.json

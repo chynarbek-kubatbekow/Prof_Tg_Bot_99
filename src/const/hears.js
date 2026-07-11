@@ -1,4 +1,4 @@
-export const Hears = {
+﻿export const Hears = {
     AI_HELPER: 'Задать вопрос',
     ASKED_QUESTIONS: 'Частые вопросы',
     ADMIN: 'Администрация',

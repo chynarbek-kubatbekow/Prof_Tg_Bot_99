@@ -1,7 +1,13 @@
-import { aiAnswerHandler } from "../handlers/ai-answer.js";
-
-export function botSessionData() {
+﻿export function botSessionData() {
   return {
     waitingForAI: false,
+    waitingForName: false,
+    waitingForPhone: false,
+    waitingForDirection: false,
+    waitingForComment: false,
+    userName: "",
+    userPhone: "",
+    userDirection: "",
+    adminAction: null,
   };
 }

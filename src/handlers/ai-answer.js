@@ -1,4 +1,4 @@
-import { config } from "../const/config.js";
+﻿import { config } from "../const/config.js";
 import { askOpenAI } from "../services/ai.js";
 
 export async function aiAnswerHandler(ctx, next) {
@@ -14,7 +14,7 @@ export async function aiAnswerHandler(ctx, next) {
 
   await ctx.replyWithChatAction("typing");
   try {
-    const botAnswer = await askOpenAI(userQuestion, ctx.faqContext);
+    const botAnswer = await askOpenAI(userQuestion, await ctx.getKnowledgeContext());
     if (botAnswer === "NOT_FOUND") {
       await ctx.reply(
         `К сожалению, я не нашёл ответ на этот вопрос. Пожалуйста, обратитесь в администрацию по телефону: ${config.adminNumber}`,
@@ -24,6 +24,11 @@ export async function aiAnswerHandler(ctx, next) {
     }
   } catch (error) {
     console.error("Error:", error);
-    await ctx.reply(`Произошла ошибка. Пожалуйста, свяжитесь с администрацией`);
+    await ctx.reply(
+      await ctx.storage.getSettingValue(
+        "error_message",
+        "Произошла ошибка. Пожалуйста, свяжитесь с администрацией",
+      ),
+    );
   }
 }

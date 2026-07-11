@@ -1,4 +1,4 @@
-import fs from "fs";
+﻿import fs from "fs";
 import { WasmPdfDocument } from "pdf-oxide-wasm/nodejs";
 import { config } from "../const/config.js";
 

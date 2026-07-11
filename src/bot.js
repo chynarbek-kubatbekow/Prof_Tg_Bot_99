@@ -1,53 +1,58 @@
+﻿import { Bot, session } from "grammy";
 import { config } from "./const/config.js";
-import { botSessionData } from "./lib/bot-session-data.js";
-import { Bot, session } from "grammy";
-import { startHandler } from "./handlers/start.js";
-import { Hears } from "./const/hears.js";
+import { adminPanelCallbackHandler, adminPanelCommandHandler, adminPanelTextHandler } from "./handlers/admin-panel.js";
 import { aiAnswerHandler } from "./handlers/ai-answer.js";
-import { adminHandler } from "./handlers/admin.js";
-import { askedQuestionsHandler } from "./handlers/asked-questions.js";
-import { unknownMessageHandler } from "./handlers/unknown-message.js";
+import { mainMenuHandler } from "./handlers/main-menu.js";
 import { registerHandler } from "./handlers/register.js";
+import { startHandler } from "./handlers/start.js";
+import { unknownMessageHandler } from "./handlers/unknown-message.js";
+import { buildMainKeyboard } from "./keyboard.js";
+import { createAdminStorage } from "./lib/admin-storage.js";
+import { botSessionData } from "./lib/bot-session-data.js";
 import { markdown } from "./lib/markdown.js";
 
-export function initBot(faqContext, number) {
+export async function initBot(faqContext, number) {
   const bot = new Bot(config.telegramToken);
-  
+  const storage = createAdminStorage();
+  await storage.ready;
+  await storage.upsertKnowledgeSource({
+    key: "src-data-faq-context",
+    title: "База знаний из файлов src/data",
+    sourceType: "src_data",
+    content: faqContext,
+  });
+
   bot.use(
     session({
       initial: botSessionData,
     }),
   );
-  
+
   bot.use(markdown());
 
   bot.use(async (ctx, next) => {
     ctx.faqContext = faqContext;
+    ctx.storage = storage;
     ctx.adminNumber = number;
+    ctx.getKnowledgeContext = async () => {
+      const dynamicContext = await storage.getDynamicKnowledgeContext();
+      const storedContext = await storage.getStoredKnowledgeContext();
+      return [dynamicContext, storedContext || faqContext].filter(Boolean).join("\n\n");
+    };
+    ctx.getMainKeyboard = async () => buildMainKeyboard(await storage.getButtonLabels());
     await next();
   });
 
   bot.command("start", startHandler);
+  bot.command("admin", adminPanelCommandHandler);
 
-  bot.hears(Hears.AI_HELPER, (ctx) => {
-    ctx.reply("Задайте ваш вопрос");
-    ctx.session.waitingForAI = true;
-    ctx.session.waitingForName = false;
-    ctx.session.waitingForPhone = false;
-  });
-
-  bot.hears(Hears.ADMIN, adminHandler);
-  bot.hears(Hears.ASKED_QUESTIONS, askedQuestionsHandler);
-  bot.hears(Hears.REGISTER, (ctx) => {
-    ctx.session.waitingForName = true;
-    ctx.session.waitingForPhone = false;
-    ctx.session.waitingForAI = false;
-    ctx.reply("Введите ваше ФИО:");
-  });
-
+  bot.on("callback_query:data", adminPanelCallbackHandler);
+  bot.on("message:text", adminPanelTextHandler);
   bot.on("message:text", registerHandler);
+  bot.on("message:text", mainMenuHandler);
   bot.on("message:text", aiAnswerHandler);
   bot.on("message", unknownMessageHandler);
+
   bot.start();
   console.log("Bot Started");
 }
