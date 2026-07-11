@@ -19,6 +19,28 @@ function clearRegisterSession(ctx) {
   ctx.session.userDirection = "";
 }
 
+function normalizeKyrgyzPhone(value) {
+  const cleanPhone = value.replace(/[\s\-\(\)]/g, "");
+
+  if (cleanPhone.startsWith("+996")) {
+    return cleanPhone;
+  }
+
+  if (cleanPhone.startsWith("0")) {
+    return `+996${cleanPhone.slice(1)}`;
+  }
+
+  if (cleanPhone.startsWith("996")) {
+    return `+${cleanPhone}`;
+  }
+
+  if (/^\d{9}$/.test(cleanPhone)) {
+    return `+996${cleanPhone}`;
+  }
+
+  return cleanPhone;
+}
+
 async function notifyAdmins(ctx, application) {
   if (config.adminIds.length === 0) {
     console.warn("ADMIN_IDS is empty. Application notification skipped.");
@@ -75,17 +97,17 @@ export async function registerHandler(ctx, next) {
   }
 
   if (ctx.session.waitingForPhone) {
-    const cleanPhone = userText.replace(/[\s\-\(\)]/g, "");
-    const phoneRegex = /^\+?[0-9]{10,15}$/;
+    const normalizedPhone = normalizeKyrgyzPhone(userText);
+    const phoneRegex = /^\+996\d{9}$/;
 
-    if (!phoneRegex.test(cleanPhone)) {
+    if (!phoneRegex.test(normalizedPhone)) {
       return await ctx.reply(
         "Некорректный номер телефона.\n" +
           "Пожалуйста, введите номер в формате: +996123456789",
       );
     }
 
-    ctx.session.userPhone = cleanPhone;
+    ctx.session.userPhone = normalizedPhone;
     ctx.session.waitingForPhone = false;
     ctx.session.waitingForDirection = true;
     return await ctx.reply("Укажите интересующее направление обучения:");
