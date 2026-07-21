@@ -1,12 +1,15 @@
 ﻿import { adminHandler } from "./admin.js";
 import { askedQuestionsHandler } from "./asked-questions.js";
 
-function resetUserFlow(ctx) {
+export function resetUserFlow(ctx) {
   ctx.session.waitingForAI = false;
   ctx.session.waitingForName = false;
   ctx.session.waitingForPhone = false;
   ctx.session.waitingForDirection = false;
   ctx.session.waitingForComment = false;
+  ctx.session.userName = "";
+  ctx.session.userPhone = "";
+  ctx.session.userDirection = "";
 }
 
 export async function mainMenuHandler(ctx, next) {

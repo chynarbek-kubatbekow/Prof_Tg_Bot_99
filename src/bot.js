@@ -4,7 +4,7 @@ import { adminPanelCallbackHandler, adminPanelCommandHandler, adminPanelTextHand
 import { aiAnswerHandler } from "./handlers/ai-answer.js";
 import { mainMenuHandler } from "./handlers/main-menu.js";
 import { registerHandler } from "./handlers/register.js";
-import { startHandler } from "./handlers/start.js";
+import { cancelHandler, startHandler } from "./handlers/start.js";
 import { unknownMessageHandler } from "./handlers/unknown-message.js";
 import { buildMainKeyboard } from "./keyboard.js";
 import { createAdminStorage } from "./lib/admin-storage.js";
@@ -53,12 +53,13 @@ export async function createBot(faqContext, number) {
   });
 
   bot.command("start", startHandler);
+  bot.command("cancel", cancelHandler);
   bot.command("admin", adminPanelCommandHandler);
 
   bot.on("callback_query:data", adminPanelCallbackHandler);
   bot.on("message:text", adminPanelTextHandler);
-  bot.on("message:text", registerHandler);
   bot.on("message:text", mainMenuHandler);
+  bot.on("message:text", registerHandler);
   bot.on("message:text", aiAnswerHandler);
   bot.on("message", unknownMessageHandler);
 

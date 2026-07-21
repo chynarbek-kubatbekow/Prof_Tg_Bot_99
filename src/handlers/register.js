@@ -93,7 +93,9 @@ export async function registerHandler(ctx, next) {
     ctx.session.userName = userText;
     ctx.session.waitingForName = false;
     ctx.session.waitingForPhone = true;
-    return await ctx.reply("Отлично! Теперь введите ваш номер телефона");
+    return await ctx.reply(
+      "Отлично! Теперь введите ваш номер телефона\n\nДля отмены отправьте /cancel или нажмите любую кнопку меню.",
+    );
   }
 
   if (ctx.session.waitingForPhone) {
