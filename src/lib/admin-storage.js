@@ -15,6 +15,7 @@ export const APPLICATION_STATUSES = {
 };
 
 export const INFO_SECTIONS = [
+  { key: "about_lyceum", title: "🏫 О лицее" },
   { key: "admission", title: "🎓 Поступление" },
   { key: "documents", title: "📄 Документы" },
   { key: "education", title: "📚 Направления обучения" },

@@ -167,6 +167,14 @@ await runText(createContext, "Документы: паспорт КР или с�
 assert.match((await storage.getInfoSection("documents")).content, /паспорт КР/);
 assert.match(await storage.getDynamicKnowledgeContext(), /паспорт КР/);
 
+const aboutSection = await storage.getInfoSection("about_lyceum");
+assert.equal(aboutSection.title, "🏫 О лицее");
+await runCallback(createContext, "adm:info:edit:about_lyceum");
+assert.equal(session.adminAction.type, "edit_info");
+await runText(createContext, "Лицей основан в 1999 году и обучает школьников современным технологиям.");
+assert.match((await storage.getInfoSection("about_lyceum")).content, /основан в 1999 году/);
+assert.match(await storage.getDynamicKnowledgeContext(), /современным технологиям/);
+
 await runCallback(createContext, "adm:dir:add");
 assert.equal(session.adminAction.type, "direction_add");
 await runText(createContext, "Программирование");
