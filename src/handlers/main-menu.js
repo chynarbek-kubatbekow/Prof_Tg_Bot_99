@@ -39,7 +39,9 @@ export async function mainMenuHandler(ctx, next) {
   if (text === labels.register) {
     resetUserFlow(ctx);
     ctx.session.waitingForName = true;
-    return ctx.reply("Введите ваше ФИО:");
+    return ctx.reply(
+      "Введите ваше ФИО:\n\nДля отмены отправьте /cancel или нажмите любую кнопку меню.",
+    );
   }
 
   return next();
